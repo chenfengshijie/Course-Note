@@ -132,7 +132,7 @@ HTTP协议具有以下特点：
 
 **发送方服务器到接收方服务器之间的传输协议仍然是SMTP协议**
 
-## 因特网目录服务与DNS协议
+### 因特网目录服务与DNS协议
 
 - DNS协议居于UDP运输层协议,使用53端口
 - DNS服务器采用分布式、层次化的数据库设计，包括根服务器、顶级服务器和权威服务器。
@@ -144,12 +144,12 @@ HTTP协议具有以下特点：
 
 - DNS数据库的报文，包含一个(name,value,type,TTL)的四元组，TTL记录生存时间，防止无用的UDP流持续存在在网络中，可以忽略。
 
-|Type|功能|案例|
-|:---|:--| :---|
-|A|主机和IP地址的映射|（www.example.com,123.123.90.127,A)|
-|NS|主机别名|(foo.com,dns.foo.com,NS)|
-|CNAME|规范主机名|（）|
-|MX|邮件服务器的规范主机名||
+| Type  | 功能                   | 案例                                |
+| :---- | :--------------------- | :---------------------------------- |
+| A     | 主机和IP地址的映射     | （www.example.com,123.123.90.127,A) |
+| NS    | 主机别名               | (foo.com,dns.foo.com,NS)            |
+| CNAME | 规范主机名             | （）                                |
+| MX    | 邮件服务器的规范主机名 |                                     |
 
 - DNS展现了强有力的健壮性，可以抵御大部分的网络攻击。
 
@@ -211,3 +211,63 @@ recv_message,recv_adress = clientSocket.recvfrom(1024)
 print("received message")
 clientSocket.close()
 ```
+
+<center>Server Code </center>
+
+```python
+from socket import *
+serverPort = 12000
+serverSocket = socket(AF_INET,SOCK_DGRAM)
+serverSocket.bind(('',serverPort))
+print("server is ready to connect")
+while True:
+    message, clientAddress = serverSocket.recvfrom(2048)
+    retrieved = message.decode().upper()
+    serverSocket.sendto(retrieved.encode(),clientAddress)
+    
+```
+
+### TCP Socket
+
+![1663906299024](image/Application_layter/1663906299024.png)
+
+<center>TCP Socket Process </center>
+
+<center>Client Socket Code </center>
+
+```python
+from socket import *
+
+serverName = 'serverName'
+serverPort = 12000
+clientSocket = socket(AF_INET, SOCK_STREAM)
+clientSocket.connect(serverName, serverPort)
+sentence = input("input something!")
+clientSocket.send(sentence.encode())
+modified = clientSocket.recv(1024)
+print("recieve message from server")
+clientSocket.close()
+```
+- 相比于UDP，TCP多了一个connect过程，同时发送信息的时候并不需要指定端口和地址
+
+<center>Server Socket Code </center>
+
+```python
+from socket import *
+
+serverPort = 12000
+serverSocket = socket(AF_INET, SOCK_STREAM)
+serverSocket.blind(('',serverPort))
+serverSocket.listen(1)
+print("server is listening on")
+while True:
+    connectionSocket,addr = serverSocket.accept()
+    sentence = connectionSocket.recv(1024).decode()
+    upper_sentence = sentence.upper()
+    connectionSocket.send(upper_sentence.encode())
+    connectionSocket.close()
+    
+    
+```
+- 在建立连接之后服务器需要新建一个套接字与客户进行通信（TCP连接是一对一的，这个Socket只用于处理请求）
+- 
