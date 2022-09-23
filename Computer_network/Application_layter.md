@@ -137,6 +137,9 @@ HTTP协议具有以下特点：
 - DNS协议居于UDP运输层协议,使用53端口
 - DNS服务器采用分布式、层次化的数据库设计，包括根服务器、顶级服务器和权威服务器。
 - DNS缓存通过缓存可以提升速率，降低带宽使用。
+- DNS可以递归查询和迭代查询，递归查询由低到高询问，迭代查询从根服务器开始查询。
+
+
   ![1663851330070](image/Application_layter/1663851330070.png)
 
 - DNS数据库的报文，包含一个(name,value,type,TTL)的四元组，TTL记录生存时间，防止无用的UDP流持续存在在网络中，可以忽略。
@@ -152,3 +155,59 @@ HTTP协议具有以下特点：
 
 ## P2P文件分发
 
+### 文件分发效率
+考虑向N个客户分发F bit大小的文件，服务器的上传速率为$u_s$,所有客户最小的下载速率为
+$d_{min} = min(d_1,d_2,...,d_n)$,每个客户的上传速率为$u_i$.
+
+#### CS架构效率
+- 服务器上传所有的文件所需要的时间为$\frac{NF}{u_s}$
+- 最后一个客户下载所需时间为$\frac{F}{d_{min}}$
+
+那么就可以得到服务器完成分发的时间为
+$$
+  D_{cs} = max(\frac{NF}{u_s},\frac{F}{d_{min}})
+$$
+
+
+####  P2P分发效率
+
+- 服务器至少需要上传一个完成的文件，所需时间为$\frac{F}{u_s}$
+- 最后的客户下载文件需要时间为$\frac{F}{d_{min}}$
+- 系统整体的上载能力为 $u_s + \sum_{i = 1}^{n}{u_i}$,整个系统需要上载NF 文件，所需的时间为$\frac{NF}{u_s+\sum_{i=1}^{n}{u_i}}$.
+
+综上，P2P的总时间为：
+$$
+  D_{p2p} = max(\frac{F}{d_{min}},\frac{F}{u_s  },\frac{NF}{u_s+\sum_{i = 1}^{n}{u_i}})
+$$
+
+### BitTorrent协议
+
+
+- 洪流。对于每个下载特定文件的所有主机的集合称为洪流。
+- 追踪器。主机当加入洪流（开始下载），会向追踪器注册，并且会周期告诉追踪器仍在下载文件中。
+- 邻近对等方。主机可以建立连接，获取文件块的主机列表。
+- 最稀缺有限策略。主机会优先下载在邻居中最稀缺的文件块。
+- 疏通。主机会选择能够以最高速率向它传输速率的四个邻居下载文件，并且向这四个邻居传输文件。这个策略被称为“tit-for-tat（一报还一报）”
+
+
+## 套接字编程
+
+套接字实现两个通信进程之间的交互
+
+### UDP Socket
+
+![1663903336256](image/Application_layter/1663903336256.png)
+<center>UDP Socket Process</center>
+
+```python
+from socket import *
+
+serverName = "hostname"
+serverPort = 12000
+clientSocket = socket.socket(socket.AF_INET, SOCK_DGRAM)
+message = input("message")
+clientSocket.sendto(message.encode(),(serverName, serverPort))
+recv_message,recv_adress = clientSocket.recvfrom(1024)
+print("received message")
+clientSocket.close()
+```
