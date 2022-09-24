@@ -1,3 +1,5 @@
+[toc]
+
 # Principle-of-Computer-Composition
 
 计算机组成原理思维导图
