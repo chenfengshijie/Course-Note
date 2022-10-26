@@ -21,6 +21,7 @@
   - [以太网](#以太网)
   - [交换机](#交换机)
   - [虚拟局域网](#虚拟局域网)
+  - [无限网络和移动网络](#无限网络和移动网络)
 <!-- GFM-TOC -->
 
 
@@ -88,13 +89,14 @@
 
 ### 5. 码分复用
 
-为每个用户分配 m bit 的码片，并且所有的码片正交，对于任意两个码片 <img src="https://latex.codecogs.com/gif.latex?\vec{S}" class="mathjax-pic"/> 和 <img src="https://latex.codecogs.com/gif.latex?\vec{T}" class="mathjax-pic"/> 有
+为每个用户分配 m bit 的码片，并且所有的码片正交，对于任意两个码片 $\overrightarrow{S}$ 和 $\overrightarrow{T}$
+  有
 
 <!-- <div align="center"><img src="https://latex.codecogs.com/gif.latex?\frac{1}{m}\vec{S}\cdot\vec{T}=0" class="mathjax-pic"/></div> <br> -->
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/308a02e9-3346-4251-8c41-bd5536dab491.png" width="100px"> </div><br>
 
-为了讨论方便，取 m=8，设码片 <img src="https://latex.codecogs.com/gif.latex?\vec{S}" class="mathjax-pic"/> 为 00011011。在拥有该码片的用户发送比特 1 时就发送该码片，发送比特 0 时就发送该码片的反码 11100100。
+为了讨论方便，取 m=8，设码片 $\overrightarrow{S}$ 为 00011011。在拥有该码片的用户发送比特 1 时就发送该码片，发送比特 0 时就发送该码片的反码 11100100。
 
 在计算时将 00011011 记作 (-1 -1 -1 +1 +1 -1 +1 +1)，可以得到
 
@@ -106,9 +108,9 @@
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e325a903-f0b1-4fbd-82bf-88913dc2f290.png" width="125px"> </div><br>
 
-其中 <img src="https://latex.codecogs.com/gif.latex?\vec{S'}" class="mathjax-pic"/> 为 <img src="https://latex.codecogs.com/gif.latex?\vec{S}" class="mathjax-pic"/> 的反码。
+其中 $\overrightarrow{S'}$为 $\overrightarrow{S}$的反码。
 
-利用上面的式子我们知道，当接收端使用码片 <img src="https://latex.codecogs.com/gif.latex?\vec{S}" class="mathjax-pic"/> 对接收到的数据进行内积运算时，结果为 0 的是其它用户发送的数据，结果为 1 的是用户发送的比特 1，结果为 -1 的是用户发送的比特 0。
+利用上面的式子我们知道，当接收端使用码片 $\overrightarrow{S}$对接收到的数据进行内积运算时，结果为 0 的是其它用户发送的数据，结果为 1 的是用户发送的比特 1，结果为 -1 的是用户发送的比特 0。
 
 码分复用需要发送的数据量为原先的 m 倍。
 
@@ -125,7 +127,7 @@ CSMA/CD 表示载波监听多点接入 / 碰撞检测。
 
 记端到端的传播时延为 τ，最先发送的站点最多经过 2τ 就可以知道是否发生了碰撞，称 2τ 为   **争用期**  。只有经过争用期之后还没有检测到碰撞，才能肯定这次发送不会发生碰撞。
 
-当发生碰撞时，站点要停止发送，等待一段时间再发送。这个时间采用   **截断二进制指数退避算法**   来确定。从离散的整数集合 {0, 1, .., (2<sup>k</sup>-1)} 中随机取出一个数，记作 r，然后取 r 倍的争用期作为重传等待时间。
+当发生碰撞时，站点要停止发送，等待一段时间再发送。这个时间采用   **截断二进制指数退避算法**   来确定。从离散的整数集合 ${0, 1, .., (2^k-1)} $中随机取出一个数，记作 r，然后取 r 倍的争用期作为重传等待时间。
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/19d423e9-74f7-4c2b-9b97-55890e0d5193.png" width="400"/> </div><br>
 
@@ -167,11 +169,15 @@ MAC 地址是链路层地址，长度为 6 字节（48 位），用于唯一标�
 早期使用集线器进行连接，集线器是一种物理层设备， 作用于比特而不是帧，当一个比特到达接口时，集线器重新生成这个比特，并将其能量强度放大，从而扩大网络的传输距离，之后再将这个比特发送到其它所有接口。如果集线器同时收到两个不同接口的帧，那么就发生了碰撞。
 
 目前以太网使用交换机替代了集线器，交换机是一种链路层设备，它不会发生碰撞，能根据 MAC 地址进行存储转发。
+1. 无连接、不可靠服务。
+2. 差错数据帧直接丢弃，依靠高层协议实现。
+3. 采用CSMA/CD协议，并且使用二进制指数退避算法进行等待。
+4. 具备前导码。前七个为10101010，最后一个为10101011.
 
 以太网帧格式：
 
 -   **类型**  ：标记上层使用的协议；
--   **数据**  ：长度在 46-1500 之间，如果太小则需要填充；
+-   **数据**  ：长度在 46-1500 之间，如果太小则需要填充；最小46通过CSMA协议算出。
 -   **FCS**  ：帧检验序列，使用的是 CRC 检验方法；
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/164944d3-bbd2-4bb2-924b-e62199c51b90.png" width="500"/> </div><br>
@@ -184,7 +190,11 @@ MAC 地址是链路层地址，长度为 6 字节（48 位），用于唯一标�
 
 下图中，交换机有 4 个接口，主机 A 向主机 B 发送数据帧时，交换机把主机 A 到接口 1 的映射写入交换表中。为了发送数据帧到 B，先查交换表，此时没有主机 B 的表项，那么主机 A 就发送广播帧，主机 C 和主机 D 会丢弃该帧，主机 B 回应该帧向主机 A 发送数据包时，交换机查找交换表得到主机 A 映射的接口为 1，就发送数据帧到接口 1，同时交换机添加主机 B 到接口 2 的映射。
 
-<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/a4444545-0d68-4015-9a3d-19209dc436b3.png" width="800"/> </div><br>
+<div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/a4444545-0d68-4015-9a3d-19209dc436b3.png" 
+width="800"/> </div><br>
+
+![1665923649474](image/link_layer/1665923649474.png)
+
 
 ## 虚拟局域网
 
@@ -195,3 +205,11 @@ MAC 地址是链路层地址，长度为 6 字节（48 位），用于唯一标�
 使用 VLAN 干线连接来建立虚拟局域网，每台交换机上的一个特殊接口被设置为干线接口，以互连 VLAN 交换机。IEEE 定义了一种扩展的以太网帧格式 802.1Q，它在标准以太网帧上加进了 4 字节首部 VLAN 标签，用于表示该帧属于哪一个虚拟局域网。
 
 <div align="center"> <img src="https://cs-notes-1256109796.cos.ap-guangzhou.myqcloud.com/e98e9d20-206b-4533-bacf-3448d0096f38.png" width="500"/> </div><br>
+
+
+
+## 无限网络和移动网络
+
+
+无限网络具有的特点：
+1. 具有较高的比特差错率。
