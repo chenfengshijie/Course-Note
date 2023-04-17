@@ -223,3 +223,24 @@ $$
 
 ## FLAG: Flow-based 3D Avatar Generation from Sparse Observations
 
+
+## Dynamic Dual-Output Diffusion Models(动态双向扩散模型)
+
+扩散模型由于需要多次迭代才能够获得突出的结果，本文分析了原因，并通过一种双向输出的技术（1.预测采样的噪声。2.直接预测图片），可以显著的降低需要的迭代次数，并获得很好的浪潮。
+
+#TODO:在看完扩散模型之后再看。
+
+
+## Exploring Dual-task Correlation for Pose Guided Person Image Generation(探索姿势引导人物图像生成的双任务相关性)
+
+任务：给定原图片$x_s$，源姿态$p_s$，和目标姿态$p_t$，生成目标图片$\tilde{x}_t$
+$G(x_s,p_s,p_t)=\tilde{x}_t$
+
+作者在本文提出了一种辅助训练任务，即$G(x_s,p_s,p_s)=x_s$,然后、
+
+
+Siamese网络是一种神经网络结构，它包含两个或多个相同的子网络。这些子网络具有相同的配置和参数，但是它们的输入可以不同。Siamese网络通常用于比较两个输入之间的相似性。这种网络结构最初被用于签名验证¹。下面是一个Siamese网络的示意图：![Siamese network architecture](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAMAAABlLrCzAAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAAB9JREFUeNpjYBgFo2AUjIJgAABYwAAGZgB5QAAAABJRU5ErkJggg==)
+
+下面是一个Siamese网络的公式：![Siamese network equation](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAMAAABlLrCzAAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAAB9JREFUeNpjYBgFo2AUjIJgAABYwAAGZgB5QAAAABJRU5ErkJggg==)
+
+其中，$f(x)$ 和 $f(y)$ 是输入 $x$ 和 $y$ 的子网络，$d$ 是两个输入之间的距离度量。
