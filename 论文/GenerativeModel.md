@@ -275,5 +275,33 @@ $$
 $G(x_s,p_s,p_t)=\tilde{x}_t$
 
 作者在本文提出了一种辅助训练任务，即$G(x_s,p_s,p_s)=x_s$,然后分析了辅助任务和主任务之间的联系（如何辅助训练的）。
+作者认为之前的任务只关注source2target，因此不能很好地获得原图像的纹理，作者这个辅助任务能够更好地模拟原图像的纹理。
 
-![1681711721197](image/GenerativeModel/1681711721197.png)
+![model structure](image/GenerativeModel/1681711721197.png)
+
+1. 辅助任务对图形的理解具有显著提升
+2. 采用了一种Siamese architecture来进行编码。
+
+![compare](image/GenerativeModel/1681712485898.png)
+
+Pose Transformer Module需要利用辅助网络来辅助主任务。
+
+![PTM](image/GenerativeModel/1681712416257.png)
+
+最后的loss函数
+$$
+\mathcal L=\mathcal L_{s\to s} + \mathcal L_{s\to t},
+$$
+$$
+\begin{array}{rcl}\mathcal{L}_{s\rightarrow s}=\lambda_{l_1}\mathcal{L}_{t_1}^s+\lambda_{perc}\mathcal{L}_{perc}^s+\lambda_{style}\mathcal{L}_{style}^s\text{,}\\ \\ \mathcal{L}_{s→t}=\lambda_{l_{1}}\mathcal{L}_{l_{1}}^t+\lambda_{percent}\mathcal{L}_{perc}\mathcal{L}^t_{perc}+\lambda_{stylc}\mathcal{L}_{cycle}^t+\lambda_{adv}\mathcal{L}_{adv},\end{array}\\
+\mathcal{L}^d_{l_1}=\|x_{d}-\tilde{x}_{d}\|_1,\\
+\mathcal{L}^d_{perc}=\sum_i\left\|\phi_i(\boldsymbol{x_d})-\phi_i(\tilde{x_d})\right\|_1,\\
+\mathcal{L}_{style}^d=\sum_j\|Gram_{j}^\phi(\boldsymbol{x_{d}})-Gram_j^\phi(\boldsymbol{\tilde{x}}_{\boldsymbol{d}})\|_1,\\
+\mathcal L_{adv}=\mathbb E[\log(1-D(\tilde{x}_t))]+\mathbb E[\log D(\boldsymbol{x}_t)].
+$$
+ 
+## Interactive Image Synthesis with Panoptic Layout Generation(具有全景布局生成的交互式图像合成)
+
+任务：之前根据用户输入生成图片需要精确的文本框，并且在框架之间会产生伪影，本文提出了PLGAN来解决这个问题。
+
+![示例](image/GenerativeModel/1681716784713.png)
