@@ -13,5 +13,8 @@
             "username": "root",
             "password": "Mysql2.71828"
         }
-    ]
+    ],
+    "files.associations": {
+        "xiosbase": "cpp"
+    }
 }
