@@ -41,3 +41,16 @@ $$
 
 任务：能够结合图像和文字来生成对应的视频。主要是图像提供视频内容，文本提供运动信息。
 
+![1681282700091](image/GenerativeModel/1681282700091.png)
+
+创新点：
+1. 训练了BERT用于处理视频和文字的信息融合
+2. 使用了一种视频注意力机制来预测视频的token（使用自学习）。
+3. 使用预训练扩充了文本。
+4. 使用transformer进行长序列的合成。
+
+**这篇文章应该是没有看懂，BERT和video的token需要详细了解**
+
+## Exemplar-bsaed Pattern Synthesis with Implicit Periodic Field Network(具有隐式周期场网络的示例模式合成)
+
+任务：给定纹理或图案的示例图片，生成相似的图片。
