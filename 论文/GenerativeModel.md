@@ -224,6 +224,44 @@ $$
 ## FLAG: Flow-based 3D Avatar Generation from Sparse Observations
 
 
+
+这篇文章是为虚拟现实服务的，玩家通过头戴式和手部传感器检测输入数据，并通过该模型生成完整的人物3D模型。
+
+
+![1681661450650](image/GenerativeModel/1681661450650.png)
+
+
+1. intermediate supervision。将GT作为注入到中间层中（就是假设那一层就是最后一层）。
+
+![1681661569150](image/GenerativeModel/1681661569150.png)
+
+2. $f_{LRA}$的设计。
+
+![1681662284616](image/GenerativeModel/1681662284616.png)
+
+3. 辅助训练任务。mask一些信息，让Encoder的输出来预测最终结果。
+4. 损失函数
+
+$$
+\mathcal{L}=\lambda_{nll}\mathcal{L}_{nll}+\lambda_{mjp}\mathcal{L}_{mjp}+\lambda_{rec}\mathcal{L}_{rec}+\lambda_{lra}\mathcal{L}_{lra}
+$$
+下述损失函数关于intermediate supervision。$w_s$是当前层占所有层数的比例。它要求预测的点概率尽量集中且准确。
+$$
+\mathcal{L_{nll}}=-\big(\log p_\theta(x_\theta)+\sum\limits_{s\in S}w_s\log p_\theta^s(x_\theta)\big)
+$$
+下述损失函数和辅助训练有关。$j_{masked}$是被选取的点，他要求被选取的点预测要对。
+$$
+\mathcal{L}_{\mathrm{mjp}}=\sum_{j\in J_{\mathrm{maked}}}\left\lVert\hat{x}_P^j-x_P^j\right\rVert_2^2
+$$
+要求$f_{LRA}，f_{\theta}$输出的潜变量要一致
+$$
+\mathcal{L}_{\mathrm{rec}}=\left\|\hat{x}_{\theta}^{\mathrm{tps}}-x_{\theta}\right\|_2^2
+$$
+该loss要求最终学习到的潜变量必须服从均值和方差和输入相等的高斯分布。
+$$
+\mathcal{L}_{\mathrm{tra}}=-\alpha_{\mathrm{nl}}\log p_{\mathbb{H}}(z^{*})+\alpha_{\mathrm{rec}}\left\|\mu_{\mathbb{H}}-z^{*}\right\|_{2}^{2}\\ -\alpha_{\mathrm{reg}}(1+\ln\sigma_{\mathbb H}-\sigma_{\mathbb{H}})
+$$
+
 ## Dynamic Dual-Output Diffusion Models(动态双向扩散模型)
 
 扩散模型由于需要多次迭代才能够获得突出的结果，本文分析了原因，并通过一种双向输出的技术（1.预测采样的噪声。2.直接预测图片），可以显著的降低需要的迭代次数，并获得很好的浪潮。
@@ -236,11 +274,6 @@ $$
 任务：给定原图片$x_s$，源姿态$p_s$，和目标姿态$p_t$，生成目标图片$\tilde{x}_t$
 $G(x_s,p_s,p_t)=\tilde{x}_t$
 
-作者在本文提出了一种辅助训练任务，即$G(x_s,p_s,p_s)=x_s$,然后、
+作者在本文提出了一种辅助训练任务，即$G(x_s,p_s,p_s)=x_s$,然后分析了辅助任务和主任务之间的联系（如何辅助训练的）。
 
-
-Siamese网络是一种神经网络结构，它包含两个或多个相同的子网络。这些子网络具有相同的配置和参数，但是它们的输入可以不同。Siamese网络通常用于比较两个输入之间的相似性。这种网络结构最初被用于签名验证¹。下面是一个Siamese网络的示意图：![Siamese network architecture](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAMAAABlLrCzAAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAAB9JREFUeNpjYBgFo2AUjIJgAABYwAAGZgB5QAAAABJRU5ErkJggg==)
-
-下面是一个Siamese网络的公式：![Siamese network equation](data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAEsCAMAAABlLrCzAAAAA1BMVEX///+nxBvIAAAAAXRSTlMAQObYZgAAAB9JREFUeNpjYBgFo2AUjIJgAABYwAAGZgB5QAAAABJRU5ErkJggg==)
-
-其中，$f(x)$ 和 $f(y)$ 是输入 $x$ 和 $y$ 的子网络，$d$ 是两个输入之间的距离度量。
+![1681711721197](image/GenerativeModel/1681711721197.png)
