@@ -210,3 +210,39 @@ $$
 
 ## FLAG: Flow-based 3D Avatar Generation from Sparse Observations
 
+这篇文章是为虚拟现实服务的，玩家通过头戴式和手部传感器检测输入数据，并通过该模型生成完整的人物3D模型。
+
+
+![1681661450650](image/GenerativeModel/1681661450650.png)
+
+
+1. intermediate supervision。将GT作为注入到中间层中（就是假设那一层就是最后一层）。
+
+![1681661569150](image/GenerativeModel/1681661569150.png)
+
+2. $f_{LRA}$的设计。
+
+![1681662284616](image/GenerativeModel/1681662284616.png)
+
+3. 辅助训练任务。mask一些信息，让Encoder的输出来预测最终结果。
+4. 损失函数
+
+$$
+\mathcal{L}=\lambda_{nll}\mathcal{L}_{nll}+\lambda_{mjp}\mathcal{L}_{mjp}+\lambda_{rec}\mathcal{L}_{rec}+\lambda_{lra}\mathcal{L}_{lra}
+$$
+下述损失函数关于intermediate supervision。$w_s$是当前层占所有层数的比例。它要求预测的点概率尽量集中且准确。
+$$
+\mathcal{L_{nll}}=-\big(\log p_\theta(x_\theta)+\sum\limits_{s\in S}w_s\log p_\theta^s(x_\theta)\big)
+$$
+下述损失函数和辅助训练有关。$j_{masked}$是被选取的点，他要求被选取的点预测要对。
+$$
+\mathcal{L}_{\mathrm{mjp}}=\sum_{j\in J_{\mathrm{maked}}}\left\lVert\hat{x}_P^j-x_P^j\right\rVert_2^2
+$$
+要求$f_{LRA}，f_{\theta}$输出的潜变量要一致
+$$
+\mathcal{L}_{\mathrm{rec}}=\left\|\hat{x}_{\theta}^{\mathrm{tps}}-x_{\theta}\right\|_2^2
+$$
+该loss要求最终学习到的潜变量必须服从均值和方差和输入相等的高斯分布。
+$$
+\mathcal{L}_{\mathrm{tra}}=-\alpha_{\mathrm{nl}}\log p_{\mathbb{H}}(z^{*})+\alpha_{\mathrm{rec}}\left\|\mu_{\mathbb{H}}-z^{*}\right\|_{2}^{2}\\ -\alpha_{\mathrm{reg}}(1+\ln\sigma_{\mathbb H}-\sigma_{\mathbb{H}})
+$$
