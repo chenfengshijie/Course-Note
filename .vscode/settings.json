@@ -1,20 +1,24 @@
 {
-    "sqltools.connections": [
-        {
-            "mysqlOptions": {
-                "authProtocol": "default"
-            },
-            "previewLimit": 50,
-            "server": "localhost",
-            "port": 3306,
-            "driver": "MySQL",
-            "name": "Test",
-            "database": "company",
-            "username": "root",
-            "password": "Mysql2.71828"
-        }
-    ],
-    "files.associations": {
-        "xiosbase": "cpp"
+  "sqltools.connections": [
+    {
+      "mysqlOptions": {
+        "authProtocol": "default"
+      },
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 3306,
+      "driver": "MySQL",
+      "name": "Test",
+      "database": "company",
+      "username": "root",
+      "password": "Mysql2.71828"
     }
+  ],
+  "files.associations": {
+    "xiosbase": "cpp",
+    "utility": "cpp",
+    "vector": "cpp",
+    "algorithm": "cpp"
+  },
+  "cmake.sourceDirectory": "${workspaceFolder}/AdvanceAlgorithm/lab/lab1"
 }
