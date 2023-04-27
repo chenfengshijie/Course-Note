@@ -5,6 +5,8 @@
 #include <ctime>
 #include <algorithm>
 #include <chrono>
+#include <string>
+#include <fstream>
 using std::vector;
 
 // 生成服从均匀分布的随机数据
@@ -209,7 +211,7 @@ double lazy_select(std::vector<double> &nums, int k)
         ans = lazy_select_function(nums, k, success);
         ++cnt;
     }
-    printf("%d\n", ans);
+    printf("%d\n", cnt);
     return ans;
 }
 // check whether the lazy_select and quick_select are right
@@ -236,10 +238,9 @@ bool check_lazy_function(double (*ptr_origin)(vector<double> &, int), double (*p
     }
     return isRight;
 }
-/*
-test function;
-follow the order:sort_select,quick_select,lazy_select in functions;
-*/
+/**
+ * @brief function,follow the order:sort_select,quick_select,lazy_select in functions;
+ */
 void run_experiments(std::vector<double (*)(std::vector<double> &, int)> functions)
 {
     clock_t st[3], end[3];
@@ -285,4 +286,162 @@ void run_experiments(std::vector<double (*)(std::vector<double> &, int)> functio
     for (int i = 0; i < 3; i++)
         fprintf(fout, "%d ", duration(st[i], end[i]));
     return;
+}
+//!! below is the second project
+
+/**
+ * @brief Function to partition the array and return the partition index.
+ * @param arr The array to be sorted.
+ * @param low The starting index of the subarray to be sorted.
+ * @param high The ending index of the subarray to be sorted.
+ * @return The partition index.
+ */
+template <typename T>
+int partition(vector<T> &arr, int low, int high)
+{
+    double pivot = arr[high];
+    int i = low - 1;
+
+    for (int j = low; j < high; j++)
+    {
+        if (arr[j] <= pivot)
+        {
+            i++;
+            std::swap(arr[i], arr[j]);
+        }
+    }
+
+    std::swap(arr[i + 1], arr[high]);
+    return i + 1;
+}
+
+/**
+ * @brief Function to perform quicksort recursively on the subarrays.
+ * @param arr The array to be sorted.
+ * @param low The starting index of the subarray to be sorted.
+ * @param high The ending index of the subarray to be sorted.
+ */
+template <typename T>
+void quicksort(vector<T> &arr, int low, int high)
+{
+    if (low < high)
+    {
+        int p = partition(arr, low, high);
+        quicksort(arr, low, p - 1);
+        quicksort(arr, p + 1, high);
+    }
+}
+/**
+ * @brief origin quich sort
+ *
+ * @param nums given array
+ */
+template <typename T>
+void origin_quick_sort(std::vector<T> &nums)
+{
+    quicksort(nums, 0, nums.size() - 1);
+}
+
+// * below is modified_quick_sort,3 ways to improve quick_sort
+// * random select pivot
+// * using insert_sort on array consists of less 5 elements
+// * 3 ways quick sort instead of 2 ways
+
+// 随机选择pivot
+template <typename T>
+int randomPivot(vector<T> &nums, int left, int right)
+{
+    int pivotIndex = rand() % (right - left + 1) + left;
+    int pivotValue = nums[pivotIndex];
+    std::swap(nums[pivotIndex], nums[right]);
+    return pivotValue;
+}
+
+// 三路快排
+template <typename T>
+void modified_quicksort(vector<T> &nums, int left, int right)
+{
+    if (left >= right)
+    {
+        return;
+    }
+    if (right - left + 1 <= 5)
+    { // 当子数组长度小于等于5时使用插入排序
+        for (int i = left + 1; i <= right; i++)
+        {
+            int temp = nums[i];
+            int j = i - 1;
+            while (j >= left && nums[j] > temp)
+            {
+                nums[j + 1] = nums[j];
+                j--;
+            }
+            nums[j + 1] = temp;
+        }
+        return;
+    }
+
+    // 随机选择pivot
+    int pivotValue = randomPivot(nums, left, right);
+
+    int lt = left, gt = right, i = left;
+    while (i <= gt)
+    {
+        if (nums[i] < pivotValue)
+        {
+            std::swap(nums[i++], nums[lt++]);
+        }
+        else if (nums[i] > pivotValue)
+        {
+            std::swap(nums[i], nums[gt--]);
+        }
+        else
+        {
+            i++;
+        }
+    }
+
+    modified_quicksort(nums, left, lt - 1);
+    modified_quicksort(nums, gt + 1, right);
+}
+
+void modify_quick_sort(std::vector<double> &nums)
+{
+    modified_quicksort(nums, 0, nums.size() - 1);
+    return;
+}
+/**
+ * @brief generate 11 datasets,
+ *
+ * @param datasets return through reference
+ * @param size the size of data
+ */
+void generateData(vector<vector<int>> &datasets, int size)
+{
+    using namespace std;
+    datasets.resize(11);
+    const int N = size;
+
+    // 1. 无序数组，数组元素各不相同
+    vector<int> nums1(N);
+    for (int i = 0; i < N; i++)
+    {
+        nums1[i] = i + 1;
+    }
+    shuffle(nums1.begin(), nums1.end(), default_random_engine(chrono::system_clock::now().time_since_epoch().count()));
+    datasets[0] = nums1;
+
+    // 2. 其他元素各不相同，一个元素占整个数组的10%到100%
+    for (int i = 1; i <= 10; i++)
+    {
+        int numCount = N * i / 10;
+        vector<int> nums2(numCount);
+        for (int j = 0; j < numCount - 1; j++)
+        {
+            nums2[j] = j + 1;
+        }
+        nums2[numCount - 1] = numCount * 10;
+        shuffle(nums2.begin(), nums2.end(), default_random_engine(chrono::system_clock::now().time_since_epoch().count()));
+        datasets[i] = nums2;
+    }
 }

@@ -13,7 +13,10 @@ double lazy_select(std::vector<double> &nums, int k);
 void run_experiments(std::vector<double (*)(std::vector<double> &, int)> functions);
 
 // 第二个实验所需函数
-void origin_quick_sort(std::vector<double> &nums);
-void modify_quick_sort(std::vector<double> &nums);
+template <typename T>
+void origin_quick_sort(std::vector<T> &nums);
+template <typename T>
+void modify_quick_sort(std::vector<T> &nums);
+void generateData(vector<vector<int>> &nums, int size);
 
 #endif // !__LAB2_H__
