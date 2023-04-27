@@ -8,6 +8,8 @@ int main()
     functions.push_back(select_after_sort);
     functions.push_back(linear_select);
     functions.push_back(lazy_select);
+
+    // bool test = check_lazy_function(select_after_sort, lazy_select, linear_select);
     run_experiments(functions);
     // 第二个实验
 

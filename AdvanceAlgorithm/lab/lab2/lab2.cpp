@@ -45,8 +45,14 @@ std::vector<double> generateNormalDistribution(int n, double mean, double stddev
 
     return data;
 }
-
-// 生成服从Zipf分布的随机数据
+/**
+ * @brief Zipf 分布服从p(x) = C / x^s,  x >= 1，它是一种大部分数据集中于队首的分布，这很大概率会卡掉lazy_select.生成服从Zipf分布的随机数据
+ *
+ * @param n 数据及大小
+ * @param alpha 公式中的s
+ * @param numItems x的范围为[1,numItems]
+ * @return std::vector<double>
+ */
 std::vector<double> generateZipfDistribution(int n, double alpha, int numItems)
 {
     std::vector<double> data;
@@ -92,7 +98,8 @@ double select_after_sort(std::vector<double> &nums, int k)
 }
 int partition(double arr[], int low, int high)
 {
-    double pivot = arr[low]; // 选择数组的第一个元素作为 pivot
+    int pivotIndex = rand() % (high - low + 1) + low;
+    double pivot = arr[pivotIndex]; // 选择数组的第一个元素作为 pivot
     int i = low + 1;
     int j = high;
 
@@ -187,9 +194,10 @@ double lazy_select_function(std::vector<double> &nums, int k, bool &success)
     lazy_set.resize(select_num);
     for (int i = 0; i < select_num; i++)
         lazy_set[i] = nums[i];
-    int x = ceil(static_cast<double>(k) / nums.size()) * select_num;
+    int x = ceil((static_cast<double>(k) / nums.size()) * select_num);
     int l = std::max(0, x - int(sqrt(nums.size()))), h = std::min(select_num - 1, x + int(sqrt(nums.size())));
-    int L = lazy_set[l], H = lazy_set[h];
+    std::sort(lazy_set.begin(), lazy_set.end());
+    double L = lazy_set[l], H = lazy_set[h];
     int rank_l = 0, rank_h = 0;
     std::vector<double> P;
     for (int i = 0; i < nums.size(); i++)
@@ -222,8 +230,10 @@ double lazy_select(std::vector<double> &nums, int k)
     {
         ans = lazy_select_function(nums, k, success);
         ++cnt;
+        if (cnt > 1000)
+            return -1;
     }
-    printf("%d\n", cnt);
+    // printf("%d\n", cnt);
     return ans;
 }
 /**
@@ -235,16 +245,15 @@ double lazy_select(std::vector<double> &nums, int k)
  * @return true pass test
  * @return false fail test
  */
-bool check_lazy_function(double (*ptr_origin)(vector<double> &, int), double (*ptr_lazy)(vector<double> &, int, bool &), double (*ptr_quick)(vector<double> &, int k))
+bool check_lazy_function(double (*ptr_origin)(vector<double> &, int), double (*ptr_lazy)(vector<double> &, int), double (*ptr_quick)(vector<double> &, int k))
 {
-    int ans1, ans2, ans3;
-    bool success = false;
+    double ans1, ans2, ans3;
+    // bool success = false;
     auto val_num = generateUniformDistribution(1000, 1.0, 5000.0);
     int k = rand() % val_num.size();
     ans1 = ptr_origin(val_num, k);
     ans2 = ptr_quick(val_num, k);
-    while (success)
-        ans3 = ptr_lazy(val_num, k, success);
+    ans3 = ptr_lazy(val_num, k);
     int isRight = true;
     if (ans2 != ans1)
     {
@@ -258,53 +267,128 @@ bool check_lazy_function(double (*ptr_origin)(vector<double> &, int), double (*p
     }
     return isRight;
 }
+
 /**
  * @brief function,follow the order:sort_select,quick_select,lazy_select in functions;
  */
 void run_experiments(std::vector<double (*)(std::vector<double> &, int)> functions)
 {
     clock_t st[3], end[3];
+    double tot_time;
     int k = 100;
     auto test_single_function = [](vector<double> &nums, int k, double (*func)(vector<double> &, int)) -> double
     { return func(nums, k); };
-    auto duration = [](clock_t st, clock_t en) -> long
-    { return (en - st) / (CLOCKS_PER_SEC); };
+    auto duration = [](clock_t st, clock_t en) -> double
+    { return static_cast<double>(en - st) / (CLOCKS_PER_SEC); };
     FILE *fout;
     fout = fopen("experiments.txt", "w");
 
     // uniform
-    auto nums = generateUniformDistribution(5000, 1.0, 10000.0);
+    printf("---------Uniform time--------\n");
+    fprintf(fout, "---------Uniform time--------\n");
+    auto nums = generateUniformDistribution(500000, 1.0, 10000.0);
     for (int i = 0; i < 3; i++)
     {
-        st[i] = clock();
-        test_single_function(nums, 2500, functions[i]);
-        end[i] = clock();
-    }
-    fprintf(fout, "Uniform time:\n");
-    for (int i = 0; i < 3; i++)
-        fprintf(fout, "%d ", duration(st[i], end[i]));
+        switch (i)
+        {
+        case 0:
+            fprintf(fout, "-----sort-----\n");
+            printf("-----sort-----\n");
+            break;
+        case 1:
+            fprintf(fout, "-----quick-----\n");
+            printf("-----quick-----\n");
+            break;
+        case 2:
+            fprintf(fout, "-----lazy-----\n");
+            printf("-----lazy-----\n");
+            break;
 
-    nums = generateNormalDistribution(5000, 1.0, 10000.0);
-    for (int i = 0; i < 3; i++)
-    {
-        st[i] = clock();
-        test_single_function(nums, 2500, functions[i]);
-        end[i] = clock();
+        default:
+            break;
+        }
+        for (int k = 1; k <= nums.size(); k += 50000)
+        {
+            fprintf(fout, "%d ", k);
+            printf("%d ", k);
+            st[i] = clock();
+            test_single_function(nums, k, functions[i]);
+            end[i] = clock();
+            printf("%lf\n", duration(st[i], end[i]));
+            fprintf(fout, "%lf\n", duration(st[i], end[i]));
+        }
     }
-    fprintf(fout, "Normal time:\n");
-    for (int i = 0; i < 3; i++)
-        fprintf(fout, "%d ", duration(st[i], end[i]));
 
-    nums = generateZipfDistribution(5000, 1.0, 10000.0);
+    nums = generateNormalDistribution(500000, 1.0, 10000.0);
+    fprintf(fout, "-------Normal time-------\n");
+    printf("-------Normal time-------\n");
     for (int i = 0; i < 3; i++)
     {
-        st[i] = clock();
-        test_single_function(nums, 2500, functions[i]);
-        end[i] = clock();
+        switch (i)
+        {
+        case 0:
+            fprintf(fout, "-----sort-----\n");
+            printf("-----sort-----\n");
+            break;
+        case 1:
+            fprintf(fout, "-----quick-----\n");
+            printf("-----quick-----\n");
+            break;
+        case 2:
+            fprintf(fout, "-----lazy-----\n");
+            printf("-----lazy-----\n");
+            break;
+
+        default:
+            break;
+        }
+        for (int k = 1; k <= nums.size(); k += 50000)
+        {
+            fprintf(fout, "%d ", k);
+            printf("%d ", k);
+            st[i] = clock();
+            test_single_function(nums, k, functions[i]);
+            end[i] = clock();
+            printf("%lf\n", duration(st[i], end[i]));
+            fprintf(fout, "%lf\n", duration(st[i], end[i]));
+        }
     }
-    fprintf(fout, "Zipf time:\n");
+
+    nums = generateZipfDistribution(500000, 1.0, 100000);
+    fprintf(fout, "--------Zipf time--------\n");
+    printf("--------Zipf time--------\n");
     for (int i = 0; i < 3; i++)
-        fprintf(fout, "%d ", duration(st[i], end[i]));
+    {
+        switch (i)
+        {
+        case 0:
+            fprintf(fout, "-----sort-----\n");
+            printf("-----sort-----\n");
+            break;
+        case 1:
+            fprintf(fout, "-----quick-----\n");
+            printf("-----quick-----\n");
+            break;
+        case 2:
+            fprintf(fout, "-----lazy-----\n");
+            printf("-----lazy-----\n");
+            break;
+
+        default:
+            break;
+        }
+        for (int k = 1; k <= nums.size(); k += 50000)
+        {
+            fprintf(fout, "%d ", k);
+            printf("%d ", k);
+            st[i] = clock();
+            test_single_function(nums, k, functions[i]);
+            end[i] = clock();
+            printf("%lf\n", duration(st[i], end[i]));
+            fprintf(fout, "%lf\n", duration(st[i], end[i]));
+        }
+    }
+
     return;
 }
 //!! below is the second project
@@ -317,7 +401,7 @@ void run_experiments(std::vector<double (*)(std::vector<double> &, int)> functio
  * @return The partition index.
  */
 template <typename T>
-int partition(vector<T> &arr, int low, int high)
+int partitionForSecond(vector<T> &arr, int low, int high)
 {
     double pivot = arr[high];
     int i = low - 1;
@@ -346,7 +430,7 @@ void quicksort(vector<T> &arr, int low, int high)
 {
     if (low < high)
     {
-        int p = partition(arr, low, high);
+        int p = partitionForSecond(arr, low, high);
         quicksort(arr, low, p - 1);
         quicksort(arr, p + 1, high);
     }
@@ -369,10 +453,10 @@ void origin_quick_sort(std::vector<T> &nums)
 
 // 随机选择pivot
 template <typename T>
-int randomPivot(vector<T> &nums, int left, int right)
+T randomPivot(vector<T> &nums, int left, int right)
 {
     int pivotIndex = rand() % (right - left + 1) + left;
-    int pivotValue = nums[pivotIndex];
+    T pivotValue = nums[pivotIndex];
     std::swap(nums[pivotIndex], nums[right]);
     return pivotValue;
 }
@@ -389,7 +473,7 @@ void modified_quicksort(vector<T> &nums, int left, int right)
     { // 当子数组长度小于等于5时使用插入排序
         for (int i = left + 1; i <= right; i++)
         {
-            int temp = nums[i];
+            T temp = nums[i];
             int j = i - 1;
             while (j >= left && nums[j] > temp)
             {
