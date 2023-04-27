@@ -6,8 +6,11 @@
 #include <algorithm>
 #include <chrono>
 using std::vector;
-
-// 生成服从均匀分布的随机数据
+/// @brief generate uniform data
+/// @param n  nums of data
+/// @param minVal range
+/// @param maxVal range
+/// @return data
 std::vector<double> generateUniformDistribution(int n, double minVal, double maxVal)
 {
     std::vector<double> data;
@@ -140,6 +143,15 @@ double kthSmallest_nonrecursion(double arr[], int n, int k)
     // 如果 k 超出数组的范围，则返回一个错误值（这里可以根据实际需求进行调整）
     return -1;
 }
+/**
+ * @brief return k smallest element of arr in [low,high]
+ *
+ * @param arr array
+ * @param low low index
+ * @param high high index
+ * @param k kth element
+ * @return double the specific element
+ */
 double kthSmallest(double arr[], int low, int high, int k)
 {
     if (low == high)
@@ -212,7 +224,15 @@ double lazy_select(std::vector<double> &nums, int k)
     printf("%d\n", ans);
     return ans;
 }
-// check whether the lazy_select and quick_select are right
+/**
+ * @brief
+ *
+ * @param ptr_origin funtion ptr to sort_select
+ * @param ptr_lazy function ptr to lazy_select
+ * @param ptr_quick ...to quick_select
+ * @return true pass test
+ * @return false fail test
+ */
 bool check_lazy_function(double (*ptr_origin)(vector<double> &, int), double (*ptr_lazy)(vector<double> &, int, bool &), double (*ptr_quick)(vector<double> &, int k))
 {
     int ans1, ans2, ans3;
@@ -236,10 +256,8 @@ bool check_lazy_function(double (*ptr_origin)(vector<double> &, int), double (*p
     }
     return isRight;
 }
-/*
-test function;
-follow the order:sort_select,quick_select,lazy_select in functions;
-*/
+/// @brief test run time
+/// @param functions must follow the order:origin_select,quick_select,lazy_select;
 void run_experiments(std::vector<double (*)(std::vector<double> &, int)> functions)
 {
     clock_t st[3], end[3];
