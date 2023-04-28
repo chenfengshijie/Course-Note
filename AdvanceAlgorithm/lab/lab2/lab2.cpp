@@ -1,4 +1,4 @@
-#include "Lab2.h"
+#include "lab2.h"
 #include <iostream>
 #include <cmath>
 #include <random>
@@ -8,12 +8,15 @@
 #include <string>
 #include <fstream>
 using std::vector;
+int stack_depth = 0; // 用于记录栈深度
+clock_t st, en;
 /// @brief generate uniform data
 /// @param n  nums of data
 /// @param minVal range
 /// @param maxVal range
 /// @return data
-std::vector<double> generateUniformDistribution(int n, double minVal, double maxVal)
+std::vector<double>
+generateUniformDistribution(int n, double minVal, double maxVal)
 {
     std::vector<double> data;
     std::random_device rd;
@@ -274,7 +277,6 @@ bool check_lazy_function(double (*ptr_origin)(vector<double> &, int), double (*p
 void run_experiments(std::vector<double (*)(std::vector<double> &, int)> functions)
 {
     clock_t st[3], end[3];
-    double tot_time;
     int k = 100;
     auto test_single_function = [](vector<double> &nums, int k, double (*func)(vector<double> &, int)) -> double
     { return func(nums, k); };
@@ -394,127 +396,6 @@ void run_experiments(std::vector<double (*)(std::vector<double> &, int)> functio
 //!! below is the second project
 
 /**
- * @brief Function to partition the array and return the partition index.
- * @param arr The array to be sorted.
- * @param low The starting index of the subarray to be sorted.
- * @param high The ending index of the subarray to be sorted.
- * @return The partition index.
- */
-template <typename T>
-int partitionForSecond(vector<T> &arr, int low, int high)
-{
-    double pivot = arr[high];
-    int i = low - 1;
-
-    for (int j = low; j < high; j++)
-    {
-        if (arr[j] <= pivot)
-        {
-            i++;
-            std::swap(arr[i], arr[j]);
-        }
-    }
-
-    std::swap(arr[i + 1], arr[high]);
-    return i + 1;
-}
-
-/**
- * @brief Function to perform quicksort recursively on the subarrays.
- * @param arr The array to be sorted.
- * @param low The starting index of the subarray to be sorted.
- * @param high The ending index of the subarray to be sorted.
- */
-template <typename T>
-void quicksort(vector<T> &arr, int low, int high)
-{
-    if (low < high)
-    {
-        int p = partitionForSecond(arr, low, high);
-        quicksort(arr, low, p - 1);
-        quicksort(arr, p + 1, high);
-    }
-}
-/**
- * @brief origin quich sort
- *
- * @param nums given array
- */
-template <typename T>
-void origin_quick_sort(std::vector<T> &nums)
-{
-    quicksort(nums, 0, nums.size() - 1);
-}
-
-// * below is modified_quick_sort,3 ways to improve quick_sort
-// * random select pivot
-// * using insert_sort on array consists of less 5 elements
-// * 3 ways quick sort instead of 2 ways
-
-// 随机选择pivot
-template <typename T>
-T randomPivot(vector<T> &nums, int left, int right)
-{
-    int pivotIndex = rand() % (right - left + 1) + left;
-    T pivotValue = nums[pivotIndex];
-    std::swap(nums[pivotIndex], nums[right]);
-    return pivotValue;
-}
-
-// 三路快排
-template <typename T>
-void modified_quicksort(vector<T> &nums, int left, int right)
-{
-    if (left >= right)
-    {
-        return;
-    }
-    if (right - left + 1 <= 5)
-    { // 当子数组长度小于等于5时使用插入排序
-        for (int i = left + 1; i <= right; i++)
-        {
-            T temp = nums[i];
-            int j = i - 1;
-            while (j >= left && nums[j] > temp)
-            {
-                nums[j + 1] = nums[j];
-                j--;
-            }
-            nums[j + 1] = temp;
-        }
-        return;
-    }
-
-    // 随机选择pivot
-    int pivotValue = randomPivot(nums, left, right);
-
-    int lt = left, gt = right, i = left;
-    while (i <= gt)
-    {
-        if (nums[i] < pivotValue)
-        {
-            std::swap(nums[i++], nums[lt++]);
-        }
-        else if (nums[i] > pivotValue)
-        {
-            std::swap(nums[i], nums[gt--]);
-        }
-        else
-        {
-            i++;
-        }
-    }
-
-    modified_quicksort(nums, left, lt - 1);
-    modified_quicksort(nums, gt + 1, right);
-}
-
-void modify_quick_sort(std::vector<double> &nums)
-{
-    modified_quicksort(nums, 0, nums.size() - 1);
-    return;
-}
-/**
  * @brief generate 11 datasets,
  *
  * @param datasets return through reference
@@ -539,13 +420,70 @@ void generateData(vector<vector<int>> &datasets, int size)
     for (int i = 1; i <= 10; i++)
     {
         int numCount = N * i / 10;
-        vector<int> nums2(numCount);
-        for (int j = 0; j < numCount - 1; j++)
+        int spc = rand() % N;
+        vector<int> nums2(nums1);
+        for (int j = 0; j < numCount; j++)
         {
-            nums2[j] = j + 1;
+            nums2[j] = spc;
         }
-        nums2[numCount - 1] = numCount * 10;
         shuffle(nums2.begin(), nums2.end(), default_random_engine(chrono::system_clock::now().time_since_epoch().count()));
         datasets[i] = nums2;
+    }
+}
+/**
+ * @brief 进行第二个项目的实验，比较origin_quicksort,modified_quicksort,std_quicksort的差别
+ *
+ * @param functions 包含三个函数指针，需要按照上述的顺序
+ */
+void run_experiment_quicksort(std::vector<void (*)(std::vector<int> &)> functions)
+{
+    std::vector<vector<int>> data;
+    const int DATA_SIZE = 1000000;
+    generateData(data, DATA_SIZE);
+    FILE *fout;
+    fout = fopen("experiment_quicksort.txt", "w");
+
+    auto duration = [](clock_t s, clock_t f) -> double
+    { return static_cast<double>(f - s) / CLOCKS_PER_SEC; };
+
+    for (int i = 0; i < 11; i++)
+    {
+        printf("%d%%", i * 10);
+        fprintf(fout, "%d%%", i * 10);
+        for (int j = 0; j < 3; j++)
+        {
+            switch (j)
+            {
+            case 0:
+                printf("origin: ");
+                fprintf(fout, "origin: ");
+                break;
+            case 1:
+                printf("modified: ");
+                fprintf(fout, "modified: ");
+                break;
+            case 2:
+                printf("std: ");
+                fprintf(fout, "std: ");
+                break;
+            default:
+                break;
+            }
+            st = clock();
+            try
+            {
+                // stack_depth = 0;
+                functions[j](data[i]);
+            }
+            catch (const std::exception &e)
+            {
+                std::cerr << e.what() << '\n';
+                printf(" stack error ");
+                fprintf(fout, "stack overflow");
+            }
+            en = clock();
+            printf("%.2lf\n", duration(st, en));
+            fprintf(fout, "%.2lf\n", duration(st, en));
+        }
     }
 }
