@@ -448,8 +448,8 @@ void run_experiment_quicksort(std::vector<void (*)(std::vector<int> &)> function
 
     for (int i = 0; i < 11; i++)
     {
-        printf("%d%%", i * 10);
-        fprintf(fout, "%d%%", i * 10);
+        printf("------%d%%------\n", i * 10);
+        fprintf(fout, "------%d%%------\n", i * 10);
         for (int j = 0; j < 3; j++)
         {
             switch (j)
