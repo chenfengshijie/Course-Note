@@ -20,5 +20,5 @@
     "vector": "cpp",
     "algorithm": "cpp"
   },
-  "cmake.sourceDirectory": "${workspaceFolder}/AdvanceAlgorithm/lab/lab1"
+  "cmake.sourceDirectory": "C:/Code/Courses/AdvanceAlgorithm/lab/lab2"
 }
