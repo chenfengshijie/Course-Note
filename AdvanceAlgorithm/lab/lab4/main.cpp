@@ -11,7 +11,6 @@ int main(int, char **)
         for (int j = 0; j <= times; j++)
         {
             auto graph = generateRandomGraph(i);
-
             val += kruskal(graph, i);
         }
         printf("%d: %.4lf\n", i, val / times);
