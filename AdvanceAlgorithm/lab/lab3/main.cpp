@@ -35,7 +35,7 @@ int main()
     //     printf("false");
     // cout << "After deleting 7" << endl;
     // skip_list.display();
-    BloomFilter bf;
+    BloomFilter<int> bf;
     bf.add(12);
 
     return 0;

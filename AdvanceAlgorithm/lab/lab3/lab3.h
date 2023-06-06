@@ -1,5 +1,5 @@
 /**
- * @file skiplist.h
+ * @file lab3.h
  * @brief SkipList 数据结构的声明和实现
  * @author chen feng
  * @date 2023-04-29
@@ -13,11 +13,11 @@
  */
 #include <iostream>
 #include <cstdlib>
-#include <ctime>
-#include <cmath>
 #include <vector>
 #include <bitset>
 #include <functional>
+using std::cout;
+using std::endl;
 using std::vector;
 
 // * 下面是跳表的抽象数据结构的实现，为实验三的第一个项目
@@ -34,7 +34,7 @@ public:
      * @param key 节点的键
      * @param level 节点的层数
      */
-    Node(const T &key, int level) : key(key), forward(level + 1, nullptr){};
+    Node(const T &key, unsigned int level) : key(key), forward(level + 1, nullptr){};
 };
 
 /**
@@ -88,20 +88,29 @@ public:
     /**
      * @brief 在跳表中搜索一个节点
      * @param key 要搜索的节点的键
-     * @return 如果找到节点，返回 true，否则返回 false
+     * @return 返回搜索到的节点指针,or nullptr
      */
-    bool search(const T &key);
+    Node<T> *search(const T &key);
+    /**
+     * @brief 范围查询[l,r]
+     *
+     * @param key1 l
+     * @param key2 r
+     * @return vector<vector<T*>> 指针
+     */
+    vector<Node<T> *> range_query(const T &key1, const T &key2);
 
+    void range_delete(const T &key1, const T &key2);
     /**
      * @brief 显示跳表的内容
      */
     void display();
 
 private:
-    int max_level;   ///< 跳表允许的最大层数
-    float p;         ///< 用于确定新节点层数的概率
-    int level;       ///< 当前跳表的层数
-    Node<T> *header; ///< 跳表的头节点
+    unsigned int max_level; ///< 跳表允许的最大层数
+    float p;                ///< 用于确定新节点层数的概率
+    unsigned int level;     ///< 当前跳表的层数
+    Node<T> *header;        ///< 跳表的头节点
 };
 
 // 跳表构造函数
@@ -175,6 +184,43 @@ void SkipList<T>::insert(const T &key)
     }
 }
 
+template <typename T>
+Node<T> *SkipList<T>::search(const T &key)
+{
+    Node<T> *x = header;
+    for (int i = level; i >= 0; i--)
+    {
+        while (x->forward[i] != nullptr && x->forward[i]->key < key)
+        {
+            x = x->forward[i];
+        }
+    }
+
+    x = x->forward[0];
+
+    return x != nullptr && x->key == key ? x : nullptr;
+}
+
+template <typename T>
+vector<Node<T> *> SkipList<T>::range_query(const T &left, const T &right)
+{
+    vector<Node<T> *> result;
+    Node<T> *x = header;
+    for (int i = level; i >= 0; --i)
+    {
+        while (x->forward[i] != nullptr && x->forward[i]->key < left)
+        {
+            x = x->forward[i];
+        }
+    }
+    x = x->forward[0];
+    while (x != nullptr && x->key <= right)
+    {
+        result.push_back(x);
+        x = x->forward[0];
+    }
+    return result;
+}
 // 删除节点
 template <typename T>
 void SkipList<T>::delete_key(const T &key)
@@ -211,29 +257,49 @@ void SkipList<T>::delete_key(const T &key)
         }
     }
 }
-/**
- * @brief search a particular element
- *
- * @tparam T val_type
- * @param key element_key
- * @return true found
- * @return false Not found
- */
+// TODO:由于是范围删除，所以可以进行一定的优化，例如删除完所有元素之后才进行层数的更新
 template <typename T>
-bool SkipList<T>::search(const T &key)
+void SkipList<T>::range_delete(const T &left, const T &right)
 {
-    Node<T> *x = header;
-    for (int i = level; i >= 0; i--)
+    vector<Node<T> *> nodes_to_delete = range_query(left, right);
+    for (auto node : nodes_to_delete)
     {
-        while (x->forward[i] != nullptr && x->forward[i]->key < key)
-        {
-            x = x->forward[i];
-        }
+        delete_key(node->key);
     }
-
-    x = x->forward[0];
-
-    return x != nullptr && x->key == key; // 显示跳表
+    // Node<T> *x = header;
+    // vector<std::pair<Node<T> *,Node<T>*>> update(max_level + 1);
+    // for (int i = level; i >= 0; --i)
+    //{
+    //     while (x->forward[i] != nullptr && x->forward[i]->key < left)
+    //     {
+    //         x = x->forward[i];
+    //     }
+    //     update[i].first = x;
+    //     while (x->forward[i] != nullptr && x->forward[i]->key < right)
+    //     {
+    //         x = x->forward[i];
+    //     }
+    //     update[i].second = x;
+    // }
+    // x = x->forward[0];
+    // for (int i = 0; i < level; i++)
+    //{
+    //     if (update[i].first->forward[i]
+    //         update[i].first->forward[i] = update[i].second->forward[i];
+    //     else
+    //         update[i].first->forward[i] = nullptr;
+    // }
+    // auto nex = x->forward[0];
+    // while (x != nullptr && x->key <= right)
+    //{
+    //     delete x;
+    //     x = nex;
+    //     nex = nex->forward[0];
+    // }
+    // while (level > 0 && header->forward[level] == nullptr)
+    //{
+    //     level--;
+    // }
 }
 
 template <typename T>
@@ -252,11 +318,13 @@ void SkipList<T>::display()
     }
 }
 
+void run_experiment1();
+
 // * 下面是实验三第二个项目Bloom Filter的实现
 
 const int BITSET_SIZE = 10000; // 位数组长度
 const int HASH_NUM = 5;        // 哈希函数个数
-
+template <typename T>
 class BloomFilter
 {
 public:
@@ -269,11 +337,12 @@ public:
      *
      * @param key the key need to be added
      */
-    void add(int key)
+    template <typename T>
+    void add(T key)
     {
         for (int i = 0; i < HASH_NUM; i++)
         {
-            uint32_t hash_value = std::hash<int>{}(key + i); // 使用 std::hash 生成哈希值
+            uint32_t hash_value = std::hash<T>{}(key + i); // 使用 std::hash 生成哈希值
             uint32_t index = hash_value % BITSET_SIZE;
             bitset_.set(index); // 将对应的位数组位置置为1
         }
@@ -285,11 +354,12 @@ public:
      * @return true Found
      * @return false Not found
      */
-    bool contains(int key) const
+    template <typename T>
+    bool contains(T key) const
     {
         for (int i = 0; i < HASH_NUM; i++)
         {
-            uint32_t hash_value = std::hash<int>{}(key + i); // 使用 std::hash 生成哈希值
+            uint32_t hash_value = std::hash<T>{}(key + i); // 使用 std::hash 生成哈希值
             uint32_t index = hash_value % BITSET_SIZE;
             if (!bitset_.test(index))
             { // 如果有任意一个位置为0，则表示元素不存在于集合中
