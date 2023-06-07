@@ -18,7 +18,12 @@
     "xiosbase": "cpp",
     "utility": "cpp",
     "vector": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "type_traits": "cpp"
   },
-  "cmake.sourceDirectory": "C:/Code/Courses/AdvanceAlgorithm/lab/lab2"
+  "cmake.sourceDirectory": "C:/Code/Courses/AdvanceAlgorithm/lab/lab2",
+  "[python]": {
+    "editor.defaultFormatter": "ms-python.black-formatter"
+  },
+  "python.formatting.provider": "none"
 }

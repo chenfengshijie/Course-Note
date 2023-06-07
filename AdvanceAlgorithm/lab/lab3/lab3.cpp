@@ -9,44 +9,159 @@
  *
  */
 #include "lab3.h"
+#include <iostream>
+#include <chrono>
+#include <set>
 
-// * 下面是实验三第二个项目Bloom Filter的实现
-
-const int BITSET_SIZE = 10000; // 位数组长度
-const int HASH_NUM = 5;        // 哈希函数个数
-
-class BloomFilter
+void run_experiment1()
 {
-public:
-    BloomFilter()
-    {
-        bitset_.reset(); // 初始化位数组，全部置为0
-    }
+    using std::cout;
+    using std::endl;
+    using std::set;
+    srand(static_cast<unsigned>(time(0)));
+    SkipList<int> skip_list(4, 0.5);
+    cout << "insert:" << endl;
+    set<int> set1;
 
-    void add(int key)
+    // test insert single key
+    auto start1 = std::chrono::high_resolution_clock::now();
+    constexpr int test_num = 1000;
+    for (int i = 0; i < test_num; i++)
     {
-        for (int i = 0; i < HASH_NUM; i++)
+        skip_list.insert(i);
+    }
+    auto end1 = std::chrono::high_resolution_clock::now();
+    auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1);
+    cout << duration1.count() << ",";
+    auto start2 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_num; i++)
+    {
+        set1.insert(i);
+    }
+    auto end2 = std::chrono::high_resolution_clock::now();
+    auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+    cout << duration2.count() << endl;
+
+    // test search single key
+    cout << "search single:" << endl;
+    start1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_num; i++)
+    {
+        skip_list.search(i);
+    }
+    end1 = std::chrono::high_resolution_clock::now();
+    duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1);
+    cout << duration1.count() << ",";
+
+    start2 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_num; i++)
+    {
+        set1.find(i);
+    }
+    end2 = std::chrono::high_resolution_clock::now();
+    duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+    cout << duration2.count() << endl;
+    // test range search
+    cout << "range search:" << endl;
+    start1 = std::chrono::high_resolution_clock::now();
+    int left, right;
+    for (int i = 0; i < test_num; i++)
+    {
+        left = std::rand() % test_num;
+        right = std::rand() % test_num;
+        if (left > right)
+            std::swap(left, right);
+
+        skip_list.range_query(left, right);
+    }
+    end1 = std::chrono::high_resolution_clock::now();
+    duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1);
+    cout << duration1.count() << ",";
+
+    start2 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_num; i++)
+    {
+        left = std::rand() % test_num;
+        right = std::rand() % test_num;
+        if (left > right)
+            std::swap(left, right);
+        auto s1 = set1.lower_bound(left);
+        auto s2 = set1.upper_bound(right);
+        while (s1 != s2 && s1 != set1.end())
         {
-            uint32_t hash_value = std::hash<int>{}(key + i); // 使用 std::hash 生成哈希值
-            uint32_t index = hash_value % BITSET_SIZE;
-            bitset_.set(index); // 将对应的位数组位置置为1
+            ++s1;
         }
     }
+    end2 = std::chrono::high_resolution_clock::now();
+    duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+    cout << duration2.count() << endl;
+    // test delete single key
+    cout << "delete single";
 
-    bool contains(int key) const
+    start1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_num; i++)
     {
-        for (int i = 0; i < HASH_NUM; i++)
-        {
-            uint32_t hash_value = std::hash<int>{}(key + i); // 使用 std::hash 生成哈希值
-            uint32_t index = hash_value % BITSET_SIZE;
-            if (!bitset_.test(index))
-            { // 如果有任意一个位置为0，则表示元素不存在于集合中
-                return false;
-            }
-        }
-        return true; // 所有位置都为1，则表示元素可能存在于集合中
+        skip_list.delete_key(i);
     }
+    end1 = std::chrono::high_resolution_clock::now();
+    duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1);
+    cout << duration1.count() << ",";
 
-private:
-    std::bitset<BITSET_SIZE> bitset_;
-};
+    start2 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_num; i++)
+    {
+        set1.erase(i);
+    }
+    end2 = std::chrono::high_resolution_clock::now();
+    duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+    cout << duration2.count() << endl;
+
+    ///<---------------------------->
+
+    // test delete range
+    cout << "delete range" << endl;
+    for (int i = 0; i < test_num; i++)
+    {
+        skip_list.insert(i);
+        set1.insert(i);
+    }
+    auto test_times = 10000;
+    start1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_times; i += 10)
+    {
+        skip_list.range_delete(i, i + 10);
+    }
+    end1 = std::chrono::high_resolution_clock::now();
+    duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1);
+    cout << duration1.count() << ",";
+
+    start2 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_times; i += 10)
+    {
+        auto s1 = set1.lower_bound(i);
+        auto s2 = set1.upper_bound(i + 10);
+        set1.erase(s1, s2);
+    }
+    end2 = std::chrono::high_resolution_clock::now();
+    duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
+    cout << duration2.count() << endl;
+    return;
+}
+
+void run_experiment2()
+{
+
+    using std::cout;
+    using std::endl;
+    BloomFilter<int> bloom_filter;
+    constexpr int test_num = 100000;
+    cout << "insert:";
+    auto start1 = std::chrono::high_resolution_clock::now();
+    for (int i = 0; i < test_num; i++)
+    {
+        bloom_filter.add(i);
+    }
+    auto end1 = std::chrono::high_resolution_clock::now();
+    auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1);
+    cout << duration1.count() << endl;
+}

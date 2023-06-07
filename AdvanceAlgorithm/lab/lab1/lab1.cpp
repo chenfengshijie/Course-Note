@@ -2,6 +2,78 @@
 #include <chrono>
 #include <iostream>
 #include <filesystem>
+int reader_faster(std::vector<std::unordered_set<int>> &documents, const char *filename)
+{
+    FILE *fp = fopen(filename, "r");
+    if (fp == NULL)
+    {
+        fprintf(stderr, "can't open file %s\n", filename);
+        return -1;
+    }
+    const int BUFFER_SIZE = 4000;
+    char buffer[BUFFER_SIZE];
+    size_t bytes_read;
+
+    // 预分配一个足够大的向量
+    const int num_documents = 100000; // 根据数据集的大小适当调整
+    documents.reserve(num_documents);
+
+    int a = 0, b = 0, tmp = -1;
+    std::unordered_set<int> document;
+    int num_max = -1;
+
+    while ((bytes_read = fread(buffer, 1, BUFFER_SIZE, fp)) > 0)
+    {
+        int i = 0;
+        while (i < bytes_read)
+        {
+            a = 0;
+            while (i < bytes_read && buffer[i] == ' ')
+            {
+                ++i;
+            }
+            while (i < bytes_read && buffer[i] >= '0' && buffer[i] <= '9')
+            {
+                a = a * 10 + buffer[i] - '0';
+                ++i;
+            }
+            while (i < bytes_read && buffer[i] == ' ')
+            {
+                ++i;
+            }
+            b = 0;
+            while (i < bytes_read && buffer[i] >= '0' && buffer[i] <= '9')
+            {
+                b = b * 10 + buffer[i] - '0';
+                ++i;
+            }
+
+            num_max = std::max(num_max, b);
+            if (a != tmp)
+            {
+                if (!document.empty())
+                {
+                    documents.emplace_back(std::move(document));
+                }
+                document.clear();
+                document.insert(b);
+                tmp = a;
+            }
+            else
+            {
+                document.insert(b);
+            }
+        }
+    }
+
+    if (!document.empty())
+    {
+        documents.emplace_back(std::move(document));
+    }
+
+    fclose(fp);
+    return num_max;
+}
 int reader(std::vector<std::unordered_set<int>> &documents, const char *filename)
 {
     int num_max = -1;
@@ -120,45 +192,44 @@ std::unordered_map<std::string, std::vector<int>> lsh(const std::vector<std::vec
     return buckets;
 }
 
-std::vector<std::pair<int, int>> compute_sim_threshold(std::unordered_map<std::string, std::vector<int>> &buckets, std::vector<std::vector<int>> signatures, double threshold)
-{
-    std::set<std::pair<int, int>> checked_pairs;
-    std::vector<std::pair<int, int>> ans;
-    for (const auto &bucket : buckets)
-    {
-        const auto &doc_ids = bucket.second;
-        if (doc_ids.size() > 1)
-        {
-            for (size_t i = 0; i < doc_ids.size(); ++i)
-            {
-                for (size_t j = i + 1; j < doc_ids.size(); ++j)
-                {
-                    int doc_id1 = doc_ids[i];
-                    int doc_id2 = doc_ids[j];
+// std::vector<std::pair<int, int>> compute_sim_threshold(std::unordered_map<std::string, std::vector<int>> &buckets, std::vector<std::vector<int>> signatures, double threshold)
+// {
+//     std::set<std::pair<int, int>> checked_pairs;
+//     std::vector<std::pair<int, int>> ans;
+//     for (const auto &bucket : buckets)
+//     {
+//         const auto &doc_ids = bucket.second;
+//         if (doc_ids.size() > 1)
+//         {
+//             for (size_t i = 0; i < doc_ids.size(); ++i)
+//             {
+//                 for (size_t j = i + 1; j < doc_ids.size(); ++j)
+//                 {
+//                     int doc_id1 = doc_ids[i];
+//                     int doc_id2 = doc_ids[j];
 
-                    // 如果已经检查过该对文档，跳过
-                    if (checked_pairs.find({doc_id1, doc_id2}) != checked_pairs.end() || doc_id1 == doc_id2)
-                    {
-                        continue;
-                    }
-                    checked_pairs.insert({doc_id1, doc_id2});
+//                     // 如果已经检查过该对文档，跳过
+//                     if (checked_pairs.find({doc_id1, doc_id2}) != checked_pairs.end() || doc_id1 == doc_id2)
+//                     {
+//                         continue;
+//                     }
+//                     checked_pairs.insert({doc_id1, doc_id2});
 
-                    double similarity = compute_jaccard_similarity(signatures[doc_id1], signatures[doc_id2]);
-                    if (similarity >= threshold)
-                    {
-                        std::cout << "文档 " << doc_id1 << " 和文档 " << doc_id2 << " 的相似度为: " << similarity << std::endl;
-                        ans.push_back(std::make_pair(i, j));
-                    }
-                }
-            }
-        }
-    }
-    return ans;
-}
+//                     double similarity = compute_jaccard_similarity(signatures[doc_id1], signatures[doc_id2]);
+//                     if (similarity >= threshold)
+//                     {
+//                         std::cout << "文档 " << doc_id1 << " 和文档 " << doc_id2 << " 的相似度为: " << similarity << std::endl;
+//                         ans.push_back(std::make_pair(i, j));
+//                     }
+//                 }
+//             }
+//         }
+//     }
+//     return ans;
+// }
 
 // below is experiments
 
-// 计算真实的Jaccard相似度
 double true_jaccard_similarity(const std::unordered_set<int> &set1, const std::unordered_set<int> &set2)
 {
     int count = 0;
@@ -169,10 +240,7 @@ double true_jaccard_similarity(const std::unordered_set<int> &set1, const std::u
     }
     return static_cast<double>(count) / (set1.size() + set2.size() - count);
 }
-/*
- * n - 元素个数
- *
- */
+
 void run_experiment(const std::vector<std::unordered_set<int>> &documents, int num_hash_functions, double threshold, int n)
 {
 
@@ -273,5 +341,10 @@ void run_experiment(const std::vector<std::unordered_set<int>> &documents, int n
          << "recall:" << recall
          << "time:" << tot_time.count()
          << std::endl;
+    std::cout << "\n num_of_hashfunc:" << num_hash_functions << "\n"
+              << "precision:" << precision << "\n"
+              << "recall:" << recall
+              << "time:" << tot_time.count()
+              << std::endl;
     fout.close();
 }
